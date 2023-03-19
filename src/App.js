@@ -1,6 +1,18 @@
 import React from 'react';
 import './App.css';
 
+
+//styling suggestions:
+ // create 2 columns:
+// put the pastebox on the lefthand side
+// and the stripped output on the righthand side
+// this will better follow the slack format
+
+// also, make the paste box much bigger so you can see all/most of the input from the slack thread
+
+// also, make the pasted-in container nice and clean -- less barebones looking
+//   and maybe in a nice font or something ??
+
 function App() {
   const [pasted, setPasted] = React.useState('')
 
