@@ -1,5 +1,4 @@
 import React from 'react';
-import logo from './logo.svg';
 import './App.css';
 
 function App() {
@@ -7,11 +6,7 @@ function App() {
 
   const handlePaste = (event) => {
     let content = event.clipboardData.getData('text/html')
-    // console.log(content)
     const doc = new DOMParser().parseFromString(content, 'text/html');
-    const tagsToRemove = 'input, img, div';
-    let count = 0
-    // let messages = [];
 
     /// REPLACES EMOJIs with text about what the emoji is
     //     i.e. the potato emoji becomes ":potato:"
@@ -30,12 +25,12 @@ function App() {
     /// REPLACES IMGs with their alt text 
     //   (since we've gotten rid of emojis and avatars,
     ///   this should just be uploaded images)
-    //   TODO: either allow image to show up by fixing CORS blockage, 
+    //   TODO: instead of deleting, ideally we'd either allow image to show up by fixing CORS blockage, 
     //     or else automatically download the image so it can be easily uploaded to notion
     doc.querySelectorAll('.c-files_container').forEach(e => {
       const img = e.querySelector('img')
       var imgText = document.createElement("span");
-      imgText.innerHTML = e.getAttribute('alt')
+      imgText.innerHTML = `<<< ${img.getAttribute('alt')} >>>`
       e.parentNode.replaceChild(imgText, e)
     });
 
@@ -43,6 +38,7 @@ function App() {
     doc.querySelectorAll('div').forEach(e => {
       e.className = ''
       e.style = {}
+      e.style.textAlign = 'left'
     });
 
     for(const elm of doc.querySelectorAll(".c-virtual_list__item")) {
@@ -54,8 +50,9 @@ function App() {
 
       // emoji class: c-emoji
 
-      count += 1
-      console.log(count)
+
+      // TODO: use these to construct <Message /> components in react, passing in the
+      // relevant props
       console.log(elm.innerHTML);
       console.log("~~~~~~~~~~~~~~~~~~")
       const sender = elm.querySelector(".c-message__sender")?.innerText
