@@ -21,11 +21,8 @@ function App() {
 
   return (
     <div className="App">
-      <header className="App-header">
-        <input onPaste={handlePaste} type="text" id="slack-input" autoComplete="no"></input>
-
-        <div className="smalltxt">{pasted}</div>
-      </header>
+      <input onPaste={handlePaste} type="text" id="slack-input" autoComplete="no"></input>
+      <div dangerouslySetInnerHTML={{__html: pasted}}></div>
     </div>
   );
 }
