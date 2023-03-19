@@ -30,7 +30,8 @@ function App() {
     /// REPLACES IMGs with their alt text 
     //   (since we've gotten rid of emojis and avatars,
     ///   this should just be uploaded images)
-    //   TODO: automatically download the image so it can be easily uploaded to notion
+    //   TODO: either allow image to show up by fixing CORS blockage, 
+    //     or else automatically download the image so it can be easily uploaded to notion
     doc.querySelectorAll('.c-files_container').forEach(e => {
       const img = e.querySelector('img')
       var imgText = document.createElement("span");
