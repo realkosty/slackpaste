@@ -66,34 +66,29 @@ function App() {
     });
 
     for(const elm of doc.querySelectorAll(".c-virtual_list__item")) {
-      // for a single message:
-      //    get sender: class c-message__sender
-      //    get timestamp: c-timestamp__label -- sometimes this is 1 day ago, so better to grab this element's parent link and select the aria-label of that link
-      //    get content: c-message_kit__blocks
-      //    get avatar: c-base_icon
-      // emoji class: c-emoji
-
-
-      var objectiveTimestamp = document.createElement("span");
+      // Timestamp manipulation is done to avoid getting timestamps reading
+      //   "1 day ago" -- someone looking later at a slack dump will have no idea when
+      //   "1 day ago" actually was.
       const timestampLink = elm.querySelector(".c-timestamp__label")
       if (timestampLink) {
         const timestamp = timestampLink?.parentElement.getAttribute('data-ts')
-        objectiveTimestamp.innerHTML = new Date(timestamp * 1000).toDateString() // i.e. Mon Mar 23 2023
-        timestampLink.parentNode.replaceChild(objectiveTimestamp, timestampLink)
+        const humanReadableTimestamp = new Date(timestamp * 1000).toDateString() // i.e. Mon Mar 23 2023
+        elm.querySelector('.c-message__sender button').innerHTML += ` (${humanReadableTimestamp})`;
+        timestampLink.remove();
       }
 
-       // TODO: use these to construct <Message /> components in react, passing in the
-      // relevant props
-      console.log(elm.innerHTML);
-      console.log("~~~~~~~~~~~~~~~~~~")
-      const sender = elm.querySelector(".c-message__sender")?.innerText
-      console.log(`sender: ${sender}`);
-      console.log("~~~~~~~~~~~~~~~~~~")
+      // // TODO: possibly use these to construct <Message /> components in react, passing in the
+      // // relevant props
+      // console.log(elm.innerHTML);
+      // console.log("~~~~~~~~~~~~~~~~~~")
+      // const sender = elm.querySelector(".c-message__sender")?.innerText
+      // console.log(`sender: ${sender}`);
+      // console.log("~~~~~~~~~~~~~~~~~~")
 
-      console.log("~~~~~~~~~~~~~~~~~~")
-      const msgContent = elm.querySelector(".c-message_kit__blocks")?.innerHTML
-      console.log(`msgContent: ${msgContent}`);
-      console.log("+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++")
+      // console.log("~~~~~~~~~~~~~~~~~~")
+      // const msgContent = elm.querySelector(".c-message_kit__blocks")?.innerHTML
+      // console.log(`msgContent: ${msgContent}`);
+      // console.log("+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++")
     }
 
     /// REMOVES STYLING FROM DIVS
