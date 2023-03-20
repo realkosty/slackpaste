@@ -34,6 +34,11 @@ function App() {
       e.remove();
     });
 
+    /// REMOVES SVGS
+    doc.querySelectorAll('svg').forEach(e => {
+      e.remove();
+    });
+
     /// REPLACES IMGs with their alt text 
     //   (since we've gotten rid of emojis and avatars,
     ///   this should just be uploaded images)
