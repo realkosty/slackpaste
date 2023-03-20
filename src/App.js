@@ -103,9 +103,10 @@ function App() {
   }
 
   return (
-    <div className="App">
-      <input onPaste={handlePaste} type="text" id="slack-input" autoComplete="no"></input>
-      <div dangerouslySetInnerHTML={{__html: pasted}}></div>
+    <div className="App container">
+      <h2>Paste Slack Thread:</h2>
+      <textarea placeholder="paste slack thread here" rows="5" cols="80" onPaste={handlePaste} type="text" id="slack-input" autoComplete="no"></textarea>
+      <div className="output" dangerouslySetInnerHTML={{__html: pasted}}></div>
     </div>
   );
 }
