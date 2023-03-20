@@ -34,6 +34,16 @@ function App() {
       e.remove();
     });
 
+    /// REMOVES 'new messages' divider
+    doc.querySelectorAll('.c-message_list__unread_divider').forEach(e => {
+      e.remove();
+    });
+
+     /// REMOVES ATTACHMENTS
+    doc.querySelectorAll('.c-message_kit__attachments').forEach(e => {
+      e.remove();
+    });
+
     /// REMOVES SVGS
     doc.querySelectorAll('svg').forEach(e => {
       e.remove();
