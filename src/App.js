@@ -23,6 +23,8 @@ function App() {
 
     /// REPLACES EMOJIs with text about what the emoji is
     //     i.e. the potato emoji becomes ":potato:"
+    //
+    // Custom emoji beyond the basics can be added per the docs: https://www.npmjs.com/package/node-emoji
     doc.querySelectorAll('[data-stringify-emoji]').forEach(e => {
       var emojiText = document.createElement("span");
       var shortcode = e.getAttribute('data-stringify-emoji') + " ";
