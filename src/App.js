@@ -1,6 +1,7 @@
 import React from 'react';
 import './App.css';
 
+var emoji = require('node-emoji')
 
 //styling suggestions:
  // create 2 columns:
@@ -23,9 +24,9 @@ function App() {
     /// REPLACES EMOJIs with text about what the emoji is
     //     i.e. the potato emoji becomes ":potato:"
     doc.querySelectorAll('[data-stringify-emoji]').forEach(e => {
-      // console.log(e)
       var emojiText = document.createElement("span");
-      emojiText.innerHTML = e.getAttribute('data-stringify-emoji') + " "
+      var shortcode = e.getAttribute('data-stringify-emoji') + " ";
+      emojiText.innerHTML = emoji.emojify(`${shortcode}`) + " ";
       e.parentNode.replaceChild(emojiText, e)
     });
 
