@@ -63,7 +63,11 @@ function App() {
         console.log(img)
         var imgText = document.createElement("span");
         imgText.className = 'missing-img'
-        imgText.innerHTML = `<<< ${img.getAttribute('alt')} >>> (you will need to download this file manually from the thread and manually add it here)`
+        var warning = ''
+        for(let i = 0; i < 10; i++) {
+          warning += emoji.emojify(`:warning:`)
+        }
+        imgText.innerHTML = `${warning} <<< ${img.getAttribute('alt')} >>> (you will need to download this file manually from the thread and manually add it here) ${warning}`
         e.parentNode.replaceChild(imgText, e)
       }
     });
