@@ -68,6 +68,7 @@ function App() {
       }
     });
 
+    var foundFirstTimestamp = false;
     for(const elm of doc.querySelectorAll(".c-virtual_list__item")) {
       // Timestamp manipulation is done to avoid getting timestamps reading
       //   "1 day ago" -- someone looking later at a slack dump will have no idea when
@@ -76,8 +77,13 @@ function App() {
       if (timestampLink) {
         const timestamp = timestampLink?.parentElement.getAttribute('data-ts')
         const humanReadableTimestamp = new Date(timestamp * 1000).toDateString() // i.e. Mon Mar 23 2023
-        elm.querySelector('.c-message__sender button').innerHTML += ` (${humanReadableTimestamp})`;
         timestampLink.remove();
+
+        // Apply timestamp only to the first message in the thread
+        if (!foundFirstTimestamp) {
+          elm.querySelector('.c-message__sender button').innerHTML += ` (${humanReadableTimestamp})`;
+          foundFirstTimestamp = true;
+        }
       }
 
       // // TODO: possibly use these to construct <Message /> components in react, passing in the
