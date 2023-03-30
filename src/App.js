@@ -47,6 +47,11 @@ function App() {
       e.remove();
     });
 
+    /// REMOVES CUSTOM STATUS EMOJIS
+    doc.querySelectorAll('.c-custom_status').forEach(e => {
+      e.remove();
+    });
+
     /// REMOVES SVGS
     doc.querySelectorAll('svg').forEach(e => {
       e.remove();
