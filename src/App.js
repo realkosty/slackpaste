@@ -10,6 +10,7 @@ const CUSTOM_STATUS_EMOJI_CLASS = '.c-custom_status'
 const ATTACHED_FILES_CONTAINER_CLASS = '.c-files_container'
 const MESSAGE_CLASS = '.c-virtual_list__item'
 const TIMESTAMP_LABEL_CLASS = '.c-timestamp__label'
+const TOP_THREE_EMOJIS_CLASS = '.c-message__actions'
 
 const SVG_ELEMENT = 'svg'
 const IMG_ELEMENT = 'img'
@@ -69,6 +70,11 @@ function App() {
 
     /// REMOVES 'new messages' divider
     doc.querySelectorAll(NEW_MESSAGES_DIVIDER_CLASS).forEach(e => {
+      e.remove();
+    });
+
+    /// REMOVES 'actions' popup (that shows top 3 emojis; this shows up when you copy a slack thread)
+    doc.querySelectorAll(TOP_THREE_EMOJIS_CLASS).forEach(e => {
       e.remove();
     });
 
