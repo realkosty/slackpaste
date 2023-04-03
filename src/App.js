@@ -3,6 +3,20 @@ import './App.css';
 
 var emoji = require('node-emoji')
 
+const AVATAR_CLASS = '.c-avatar'
+const NEW_MESSAGES_DIVIDER_CLASS = '.c-message_list__unread_divider'
+const ATTACHMENTS_CLASS = '.c-message_kit__attachments' // how is this different from attached files?
+const CUSTOM_STATUS_EMOJI_CLASS = '.c-custom_status'
+const ATTACHED_FILES_CONTAINER_CLASS = '.c-files_container'
+const MESSAGE_CLASS = '.c-virtual_list__item'
+const TIMESTAMP_LABEL_CLASS = '.c-timestamp__label'
+
+const SVG_ELEMENT = 'svg'
+const IMG_ELEMENT = 'img'
+const DIV_ELEMENT = 'div'
+const SPAN_ELEMENT = 'span'
+
+
 //styling suggestions:
  // create 2 columns:
 // put the pastebox on the lefthand side
@@ -16,6 +30,22 @@ var emoji = require('node-emoji')
 
 function App() {
   const [pasted, setPasted] = React.useState('')
+
+  // taken from https://stackoverflow.com/a/59462028
+  const handleClick = () => {
+    const element = document.getElementById('formatted-output')
+    if (!element.innerText) {
+      console.log("nothing to copy, returning")
+      return
+    }
+    window.getSelection().removeAllRanges();
+    let range = document.createRange();
+    range.selectNode(typeof element === 'string' ? document.getElementById(element) : element);
+    window.getSelection().addRange(range);
+    document.execCommand('copy');
+    window.getSelection().removeAllRanges();
+    alert('copied output to the clipboard')
+  }
 
   const handlePaste = (event) => {
     let content = event.clipboardData.getData('text/html')
@@ -33,27 +63,27 @@ function App() {
     });
 
     /// REMOVES AVATARS
-    doc.querySelectorAll('.c-avatar').forEach(e => {
+    doc.querySelectorAll(AVATAR_CLASS).forEach(e => {
       e.remove();
     });
 
     /// REMOVES 'new messages' divider
-    doc.querySelectorAll('.c-message_list__unread_divider').forEach(e => {
+    doc.querySelectorAll(NEW_MESSAGES_DIVIDER_CLASS).forEach(e => {
       e.remove();
     });
 
      /// REMOVES ATTACHMENTS
-    doc.querySelectorAll('.c-message_kit__attachments').forEach(e => {
+    doc.querySelectorAll(ATTACHMENTS_CLASS).forEach(e => {
       e.remove();
     });
 
     /// REMOVES CUSTOM STATUS EMOJIS
-    doc.querySelectorAll('.c-custom_status').forEach(e => {
+    doc.querySelectorAll(CUSTOM_STATUS_EMOJI_CLASS).forEach(e => {
       e.remove();
     });
 
     /// REMOVES SVGS
-    doc.querySelectorAll('svg').forEach(e => {
+    doc.querySelectorAll(SVG_ELEMENT).forEach(e => {
       e.remove();
     });
 
@@ -62,11 +92,11 @@ function App() {
     ///   this should just be uploaded images)
     //   TODO: instead of deleting, ideally we'd either allow image to show up by fixing CORS blockage, 
     //     or else automatically download the image so it can be easily uploaded to notion
-    doc.querySelectorAll('.c-files_container').forEach(e => {
-      const img = e.querySelector('img')
+    doc.querySelectorAll(ATTACHED_FILES_CONTAINER_CLASS).forEach(e => {
+      const img = e.querySelector(IMG_ELEMENT)
       if (img) {
         console.log(img)
-        var imgText = document.createElement("span");
+        var imgText = document.createElement(SPAN_ELEMENT);
         imgText.className = 'missing-img'
         var warning = ''
         for(let i = 0; i < 10; i++) {
@@ -78,11 +108,11 @@ function App() {
     });
 
     var foundFirstTimestamp = false;
-    for(const elm of doc.querySelectorAll(".c-virtual_list__item")) {
+    for(const elm of doc.querySelectorAll(MESSAGE_CLASS)) {
       // Timestamp manipulation is done to avoid getting timestamps reading
       //   "1 day ago" -- someone looking later at a slack dump will have no idea when
       //   "1 day ago" actually was.
-      const timestampLink = elm.querySelector(".c-timestamp__label")
+      const timestampLink = elm.querySelector(TIMESTAMP_LABEL_CLASS)
       if (timestampLink) {
         const timestamp = timestampLink?.parentElement.getAttribute('data-ts')
         const humanReadableTimestamp = new Date(timestamp * 1000).toDateString() // i.e. Mon Mar 23 2023
@@ -110,7 +140,7 @@ function App() {
     }
 
     /// REMOVES STYLING FROM DIVS
-    doc.querySelectorAll('div').forEach(e => {
+    doc.querySelectorAll(DIV_ELEMENT).forEach(e => {
       e.className = ''
       e.style = {}
       e.style.textAlign = 'left'
@@ -131,7 +161,10 @@ function App() {
     <div className="App container">
       <h2>Paste Slack Thread:</h2>
       <textarea placeholder="paste slack thread here" rows="5" cols="80" onPaste={handlePaste} type="text" id="slack-input" autoComplete="no"></textarea>
-      <div className="output" dangerouslySetInnerHTML={{__html: pasted}}></div>
+      <p>
+        <button onClick={handleClick}>Copy Pasted Output</button>
+      </p>
+      <div className="output" id="formatted-output" dangerouslySetInnerHTML={{__html: pasted}}></div>
     </div>
   );
 }
