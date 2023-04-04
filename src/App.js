@@ -6,6 +6,8 @@ import { PopupProvider } from './popupContext';
 import Popup from './popup'
 import { usePopup } from './popupContext'
 
+var emoji = require('node-emoji')
+
 
 //styling suggestions:
  // create 2 columns:
@@ -17,8 +19,9 @@ function CopyButton() {
   const { triggerPopup } = usePopup()
 
   const handleCopy = () => {
-    triggerPopup('Copied formatted output to clipboard.')
-    copyToClipboard()
+    if (copyToClipboard()) {
+      triggerPopup(`${emoji.emojify(':scissors:')}  Copied formatted output to clipboard.`)
+    }
   }
 
   return (

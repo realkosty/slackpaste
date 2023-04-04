@@ -81,3 +81,10 @@ textarea:focus {
   margin-left: 50%;
   overflow: auto;
 }
+
+.popup {
+  padding: 10px;
+  background-color: #7bed9f;
+  margin-bottom: 50px;
+  border-radius: 10px;
+}

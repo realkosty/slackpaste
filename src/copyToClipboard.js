@@ -11,6 +11,7 @@ const copyToClipboard = () => {
     window.getSelection().addRange(range);
     document.execCommand('copy');
     window.getSelection().removeAllRanges();
+    return true
   }
 
   export { copyToClipboard }
