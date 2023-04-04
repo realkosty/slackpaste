@@ -35,6 +35,10 @@ function App() {
   const [pasted, setPasted] = React.useState('')
   const [disabled, setDisabled] = React.useState(true)
 
+  React.useEffect(() => {
+    document.getElementById(SLACK_INPUT).focus()
+  }, [pasted])
+
   const handlePaste = (event) => {
     let content = event.clipboardData.getData('text/html')
     var doc = new DOMParser().parseFromString(content, 'text/html');
