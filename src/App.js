@@ -12,7 +12,7 @@ const SLACK_INPUT = 'slack-input'
 
 
 //styling suggestions:
- // create 2 columns:
+// create 2 columns:
 // put the pastebox on the lefthand side
 // and the stripped output on the righthand side
 // this will better follow the slack format
