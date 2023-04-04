@@ -11,6 +11,7 @@ const ATTACHED_FILES_CONTAINER_CLASS = '.c-files_container'
 const MESSAGE_CLASS = '.c-virtual_list__item'
 const TIMESTAMP_LABEL_CLASS = '.c-timestamp__label'
 const TOP_THREE_EMOJIS_CLASS = '.c-message__actions'
+const ADD_REACTION_CLASS = '.c-reaction_add'
 
 const SVG_ELEMENT = 'svg'
 const IMG_ELEMENT = 'img'
@@ -48,10 +49,7 @@ function App() {
     alert('copied output to the clipboard')
   }
 
-  const handlePaste = (event) => {
-    let content = event.clipboardData.getData('text/html')
-    const doc = new DOMParser().parseFromString(content, 'text/html');
-
+  const processDoc = (doc) => {
     /// REPLACES EMOJIs with text about what the emoji is
     //     i.e. the potato emoji becomes ":potato:"
     //
@@ -70,6 +68,11 @@ function App() {
 
     /// REMOVES 'new messages' divider
     doc.querySelectorAll(NEW_MESSAGES_DIVIDER_CLASS).forEach(e => {
+      e.remove();
+    });
+
+    /// REMOVES 'add reaction' button
+    doc.querySelectorAll(ADD_REACTION_CLASS).forEach(e => {
       e.remove();
     });
 
@@ -159,6 +162,13 @@ function App() {
       }
     });
 
+    return doc
+  }
+
+  const handlePaste = (event) => {
+    let content = event.clipboardData.getData('text/html')
+    var doc = new DOMParser().parseFromString(content, 'text/html');
+    doc = processDoc(doc) //comment this line out if you want to debug / inspect original HTML
     content = new XMLSerializer().serializeToString(doc)
     setPasted(content)
   }
