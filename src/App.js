@@ -1,6 +1,7 @@
 import React from 'react';
 import './App.css';
 import { processDoc } from './processDoc';
+import { copyToClipboard } from './copyToClipboard';
 
 //styling suggestions:
  // create 2 columns:
@@ -10,22 +11,6 @@ import { processDoc } from './processDoc';
 
 function App() {
   const [pasted, setPasted] = React.useState('')
-
-  // taken from https://stackoverflow.com/a/59462028
-  const handleClick = () => {
-    const element = document.getElementById('formatted-output')
-    if (!element.innerText) {
-      console.log("nothing to copy, returning")
-      return
-    }
-    window.getSelection().removeAllRanges();
-    let range = document.createRange();
-    range.selectNode(typeof element === 'string' ? document.getElementById(element) : element);
-    window.getSelection().addRange(range);
-    document.execCommand('copy');
-    window.getSelection().removeAllRanges();
-    alert('copied output to the clipboard')
-  }
 
   const handlePaste = (event) => {
     let content = event.clipboardData.getData('text/html')
@@ -40,7 +25,7 @@ function App() {
       <h2>Paste Slack Thread:</h2>
       <textarea placeholder="paste slack thread here" rows="5" cols="80" onPaste={handlePaste} type="text" id="slack-input" autoComplete="no"></textarea>
       <p>
-        <button onClick={handleClick}>Copy Formatted Output</button>
+        <button onClick={copyToClipboard}>Copy Formatted Output</button>
       </p>
       <div className="output" id="formatted-output" dangerouslySetInnerHTML={{__html: pasted}}></div>
     </div>
