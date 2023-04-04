@@ -77,7 +77,11 @@ const processDoc = (doc) => {
         for(let i = 0; i < 10; i++) {
           warning += emoji.emojify(`:warning:`)
         }
-        imgText.innerHTML = `${warning} <<< ${img.getAttribute('alt')} >>> (you will need to download this file manually from the thread and manually add it here) ${warning}`
+        imgText.innerHTML = `
+            ${warning}
+            (you will need to <a href="${img.src}" target="_blank">download ${img.getAttribute('alt')}</a> manually 
+            and manually add it to Notion) 
+            ${warning}`
         e.parentNode.replaceChild(imgText, e)
       }
     });
