@@ -32,6 +32,10 @@ function CopyButton({pasted, disabled}) {
 }
 
 function App() {
+  // todo: use one state https://stackoverflow.com/a/61106532
+  // to enable us to setDisabled(true) upon clicking the 'clear' button
+  // Right now we only setPasted to empty and that leaves the 'copy' button
+  // enabled when there is nothing to copy.
   const [pasted, setPasted] = React.useState('')
   const [disabled, setDisabled] = React.useState(true)
 
