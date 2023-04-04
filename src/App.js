@@ -168,7 +168,7 @@ function App() {
       <h2>Paste Slack Thread:</h2>
       <textarea placeholder="paste slack thread here" rows="5" cols="80" onPaste={handlePaste} type="text" id="slack-input" autoComplete="no"></textarea>
       <p>
-        <button onClick={handleClick}>Copy Pasted Output</button>
+        <button onClick={handleClick}>Copy Formatted Output</button>
       </p>
       <div className="output" id="formatted-output" dangerouslySetInnerHTML={{__html: pasted}}></div>
     </div>
