@@ -107,6 +107,17 @@ textarea:focus {
   cursor: pointer;
 }
 
+.delete-button {
+  border-radius: 10px;
+  border: none;
+  padding: 5px;
+}
+
+.delete-button:hover {
+  cursor: pointer;
+  background-color: #a4b0be;
+}
+
 *:disabled {
   background-color: #747d8c
 }

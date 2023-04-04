@@ -4,9 +4,11 @@ import { processDoc } from './processDoc';
 import { copyToClipboard } from './copyToClipboard';
 import { PopupProvider } from './popupContext';
 import Popup from './popup'
+import DeleteButton from './DeleteButton';
 import { usePopup } from './popupContext'
 
 var emoji = require('node-emoji')
+const SLACK_INPUT = 'slack-input'
 
 
 //styling suggestions:
@@ -51,7 +53,8 @@ function App() {
       <div className="App container">
         <div className="col1">
           <h2 className="header">Paste Slack Thread:</h2>
-          <textarea placeholder="paste slack thread here" rows="5" cols="80" onPaste={handlePaste} type="text" id="slack-input" autoComplete="no"></textarea>          
+          <textarea placeholder="paste slack thread here" rows="5" cols="80" onPaste={handlePaste} type="text" id={SLACK_INPUT} autoComplete="no"></textarea>
+          <DeleteButton idToClear={SLACK_INPUT} />
           <CopyButton pasted={pasted} disabled={disabled} />
           <Popup />
         </div>
