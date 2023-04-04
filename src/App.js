@@ -53,8 +53,8 @@ function App() {
       <div className="App container">
         <div className="col1">
           <h2 className="header">Paste Slack Thread:</h2>
-          <textarea placeholder="paste slack thread here" rows="5" cols="80" onPaste={handlePaste} type="text" id={SLACK_INPUT} autoComplete="no"></textarea>
-          <DeleteButton idToClear={SLACK_INPUT} />
+          <textarea autoFocus placeholder="paste slack thread here" rows="5" cols="80" onPaste={handlePaste} type="text" id={SLACK_INPUT} autoComplete="no"></textarea>
+          <DeleteButton onClick={() => {document.getElementById(SLACK_INPUT).value = ''; setPasted('')}} />
           <CopyButton pasted={pasted} disabled={disabled} />
           <Popup />
         </div>

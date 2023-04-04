@@ -1,10 +1,6 @@
-function DeleteButton({idToClear}) {
-    function handleClick() {
-        document.getElementById(idToClear).value = ''
-    }
-
+function DeleteButton({onClick}) {
     return (
-        <button className='delete-button' onClick={handleClick}>Clear Input</button>
+        <button className='delete-button' onClick={onClick}>Clear Input</button>
     )
 }
 
