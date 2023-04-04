@@ -20,7 +20,7 @@ function CopyButton({pasted}) {
 
   const handleCopy = () => {
     if (copyToClipboard()) {
-      triggerPopup(`${emoji.emojify(':scissors:')}  Copied formatted output to clipboard.`)
+      triggerPopup(`${emoji.emojify(':scissors:')}  Copied to clipboard!  ${emoji.emojify(':scissors:')}`)
     }
   }
 
