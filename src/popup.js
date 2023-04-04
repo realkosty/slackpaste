@@ -8,11 +8,11 @@ const Popup = () => {
     useEffect(() => {
         const timer = setTimeout(() => {
             clearPopup()
-        }, 4000)
+        }, 3000)
         return () => clearTimeout(timer)
     }, [value, clearPopup])
 
-    return value ? <div className='popup'>{value}</div> : null
+    return value ? <span className='popup'>{value}</span> : null
 }
 
 export default Popup
