@@ -22,12 +22,16 @@ function App() {
 
   return (
     <div className="App container">
-      <h2>Paste Slack Thread:</h2>
-      <textarea placeholder="paste slack thread here" rows="5" cols="80" onPaste={handlePaste} type="text" id="slack-input" autoComplete="no"></textarea>
-      <p>
-        <button onClick={copyToClipboard}>Copy Formatted Output</button>
-      </p>
-      <div className="output" id="formatted-output" dangerouslySetInnerHTML={{__html: pasted}}></div>
+      <div className="col1">
+        <h2 className="header">Paste Slack Thread:</h2>
+        <textarea placeholder="paste slack thread here" rows="5" cols="80" onPaste={handlePaste} type="text" id="slack-input" autoComplete="no"></textarea>
+        <p>
+          <button onClick={copyToClipboard}>Copy Formatted Output</button>
+        </p>
+      </div>
+      <div className="col2">
+        <div className="output" id="formatted-output" dangerouslySetInnerHTML={{__html: pasted}}></div>
+      </div>
     </div>
   );
 }

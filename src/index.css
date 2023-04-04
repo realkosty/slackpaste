@@ -51,12 +51,33 @@ textarea:focus {
   margin: 50px 100px 200px 200px;
 }
 
-.output {
-  margin-top: 100px;
-  max-width: 500px;
+.header, .output {
+  margin-top: 100px
 }
 
 .missing-img {
   color: red;
   font-size: 1.5em;
+}
+
+/* https://stackoverflow.com/a/48391614
+  for details on making two columns, one fixed
+  and one scrollable
+*/
+
+.col1, .col2 {
+  height: 100%;
+  width: 50%;
+}
+
+.col1 {
+  background-color: #ffffff;
+  position: fixed;
+  left: 0;
+  top: 0;
+}
+
+.col2 {
+  margin-left: 50%;
+  overflow: auto;
 }
