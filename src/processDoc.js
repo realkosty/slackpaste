@@ -15,7 +15,18 @@ const IMG_ELEMENT = 'img'
 const DIV_ELEMENT = 'div'
 const SPAN_ELEMENT = 'span'
 
+// By default, slack provides an image src that is the thumbnail
+// version, aka lower resolution. This replaces that with the
+// fullsize image. 
+const increaseResolution = (image) => {
+  var formatted = image.replace('files-tmb', 'files-pri') // thumbnail vs fullsize i think
+  formatted = formatted.replace('_720.png', '.png')
+  return formatted
+}
+
 const processDoc = (doc) => {
+    var attachmentsDetected = 0;
+
     /// REPLACES EMOJIs with text about what the emoji is
     //     i.e. the potato emoji becomes ":potato:"
     //
@@ -70,6 +81,7 @@ const processDoc = (doc) => {
     doc.querySelectorAll(ATTACHED_FILES_CONTAINER_CLASS).forEach(e => {
       const img = e.querySelector(IMG_ELEMENT)
       if (img) {
+        attachmentsDetected += 1
         console.log(img)
         var imgText = document.createElement(SPAN_ELEMENT);
         imgText.className = 'missing-img'
@@ -79,7 +91,7 @@ const processDoc = (doc) => {
         }
         imgText.innerHTML = `
             ${warning}
-            (you will need to <a href="${img.src}" target="_blank">download ${img.getAttribute('alt')}</a> manually 
+            (you must download <a href="${increaseResolution(img.src)}" target="_blank">${img.getAttribute('alt')}</a> 
             and manually add it to Notion) 
             ${warning}`
         e.parentNode.replaceChild(imgText, e)
@@ -132,7 +144,7 @@ const processDoc = (doc) => {
       }
     });
 
-    return doc
+    return [doc, attachmentsDetected]
   }
 
   export {processDoc};

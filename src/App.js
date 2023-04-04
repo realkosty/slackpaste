@@ -36,10 +36,14 @@ function App() {
   const handlePaste = (event) => {
     let content = event.clipboardData.getData('text/html')
     var doc = new DOMParser().parseFromString(content, 'text/html');
-    doc = processDoc(doc) //comment this line out if you want to debug / inspect original HTML
-    content = new XMLSerializer().serializeToString(doc)
+    var [processed, attachmentsDetected] = processDoc(doc) //comment this line out if you want to debug / inspect original HTML
+    content = new XMLSerializer().serializeToString(processed)
     setDisabled(false)
     setPasted(content)
+    if(attachmentsDetected > 0) {
+      const attachmentGrammar = attachmentsDetected > 1 ? 'attachments' : 'attachment'
+      alert(`${attachmentsDetected} ${attachmentGrammar} detected. Remember to download image files and manually include them in notion.`)
+    }
   }
 
   return (
