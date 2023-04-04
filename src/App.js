@@ -15,7 +15,7 @@ var emoji = require('node-emoji')
 // and the stripped output on the righthand side
 // this will better follow the slack format
 
-function CopyButton({pasted}) {
+function CopyButton({pasted, disabled}) {
   const { triggerPopup } = usePopup()
 
   const handleCopy = () => {
@@ -25,18 +25,20 @@ function CopyButton({pasted}) {
   }
 
   return (
-    <p><button className="copy-button" onClick={handleCopy}>Copy Formatted Output</button></p>
+    <p><button className="copy-button" onClick={handleCopy} disabled={disabled}>Copy Formatted Output</button></p>
   )
 }
 
 function App() {
   const [pasted, setPasted] = React.useState('')
+  const [disabled, setDisabled] = React.useState(true)
 
   const handlePaste = (event) => {
     let content = event.clipboardData.getData('text/html')
     var doc = new DOMParser().parseFromString(content, 'text/html');
     doc = processDoc(doc) //comment this line out if you want to debug / inspect original HTML
     content = new XMLSerializer().serializeToString(doc)
+    setDisabled(false)
     setPasted(content)
   }
 
@@ -46,7 +48,7 @@ function App() {
         <div className="col1">
           <h2 className="header">Paste Slack Thread:</h2>
           <textarea placeholder="paste slack thread here" rows="5" cols="80" onPaste={handlePaste} type="text" id="slack-input" autoComplete="no"></textarea>          
-          <CopyButton pasted={pasted} />
+          <CopyButton pasted={pasted} disabled={disabled} />
           <Popup />
         </div>
         <div className="col2">

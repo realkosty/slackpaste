@@ -93,10 +93,25 @@ textarea:focus {
 
 .copy-button {
   border-radius: 10px;
+  color:white;
   border: none;
   font-size: 1em;
   padding: 15px;
-  background-color: #dfe4ea;
+  background-color: #70a1ff;
   margin-top: 10px;
   margin-bottom: 15px;
+}
+
+.copy-button:hover {
+  background-color: #1e90ff;
+  cursor: pointer;
+}
+
+*:disabled {
+  background-color: #747d8c
+}
+
+*:disabled:hover {
+  background-color: #747d8c;
+  cursor: not-allowed;
 }
