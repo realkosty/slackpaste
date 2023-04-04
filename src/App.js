@@ -25,7 +25,7 @@ function CopyButton({pasted}) {
   }
 
   return (
-    pasted.length === 0 ? null : <p><button className="copy-button" onClick={handleCopy}>Copy Formatted Output</button></p>
+    <p><button className="copy-button" onClick={handleCopy}>Copy Formatted Output</button></p>
   )
 }
 
