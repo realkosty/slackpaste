@@ -4,7 +4,7 @@ const AVATAR_CLASS = '.c-avatar'
 const NEW_MESSAGES_DIVIDER_CLASS = '.c-message_list__unread_divider'
 const ATTACHMENTS_CLASS = '.c-message_kit__attachments' // how is this different from attached files?
 const CUSTOM_STATUS_EMOJI_CLASS = '.c-custom_status'
-const ATTACHED_FILES_CONTAINER_CLASS = '.c-files_container'
+const ATTACHED_FILES_CONTAINER_CLASS = '.p-message_gallery_image_file'
 const MESSAGE_CLASS = '.c-virtual_list__item'
 const TIMESTAMP_LABEL_CLASS = '.c-timestamp__label'
 const TOP_THREE_EMOJIS_CLASS = '.c-message__actions'
@@ -13,7 +13,7 @@ const ADD_REACTION_CLASS = '.c-reaction_add'
 const SVG_ELEMENT = 'svg'
 const IMG_ELEMENT = 'img'
 const DIV_ELEMENT = 'div'
-const SPAN_ELEMENT = 'span'
+const PARAGRAPH_ELEMENT = 'p'
 
 // By default, slack provides an image src that is the thumbnail
 // version, aka lower resolution. This replaces that with the
@@ -78,12 +78,12 @@ const processDoc = (doc) => {
     ///   this should just be uploaded images)
     //   TODO: instead of deleting, ideally we'd either allow image to show up by fixing CORS blockage, 
     //     or else automatically download the image so it can be easily uploaded to notion
-    doc.querySelectorAll(ATTACHED_FILES_CONTAINER_CLASS).forEach(e => {
-      const img = e.querySelector(IMG_ELEMENT)
+    doc.querySelectorAll(ATTACHED_FILES_CONTAINER_CLASS).forEach(imgContainer => {
+      const img = imgContainer.querySelector(IMG_ELEMENT)
       if (img) {
         attachmentsDetected += 1
         console.log(img)
-        var imgText = document.createElement(SPAN_ELEMENT);
+        var imgText = document.createElement(PARAGRAPH_ELEMENT);
         imgText.className = 'missing-img'
         var warning = ''
         for(let i = 0; i < 10; i++) {
@@ -94,7 +94,9 @@ const processDoc = (doc) => {
             (you must download <a href="${increaseResolution(img.src)}" target="_blank">${img.getAttribute('alt')}</a> 
             and manually add it to Notion) 
             ${warning}`
-        e.parentNode.replaceChild(imgText, e)
+
+          imgContainer.parentNode.replaceChild(imgText, imgContainer)
+          imgContainer.remove()
       }
     });
 
@@ -130,7 +132,7 @@ const processDoc = (doc) => {
       // console.log("+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++")
     }
 
-    /// REMOVES STYLING FROM DIVS
+    // REMOVES STYLING FROM DIVS
     doc.querySelectorAll(DIV_ELEMENT).forEach(e => {
       e.className = ''
       e.style = {}
