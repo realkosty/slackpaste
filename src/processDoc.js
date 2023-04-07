@@ -14,6 +14,7 @@ const SVG_ELEMENT = 'svg'
 const IMG_ELEMENT = 'img'
 const DIV_ELEMENT = 'div'
 const PARAGRAPH_ELEMENT = 'p'
+const LI_ELEMENT = 'li'
 
 // By default, slack provides an image src that is the thumbnail
 // version, aka lower resolution. This replaces that with the
@@ -36,6 +37,18 @@ const processDoc = (doc) => {
       var shortcode = e.getAttribute('data-stringify-emoji') + " ";
       emojiText.innerHTML = emoji.emojify(`${shortcode}`) + " ";
       e.parentNode.replaceChild(emojiText, e)
+    });
+
+    // Replace linebreaks marked by class
+    doc.querySelectorAll('.c-mrkdwn__br').forEach(e => {
+      const paragraph = document.createElement(PARAGRAPH_ELEMENT)
+      e.parentNode.replaceChild(paragraph, e)
+    });
+
+    // Replace linebreaks marked by <br> tag
+    doc.querySelectorAll('br').forEach(e => {
+      const paragraph = document.createElement(PARAGRAPH_ELEMENT)
+      e.parentNode.replaceChild(paragraph, e)
     });
 
     /// REMOVES AVATARS
@@ -131,6 +144,10 @@ const processDoc = (doc) => {
       // console.log(`msgContent: ${msgContent}`);
       // console.log("+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++")
     }
+
+    doc.querySelectorAll(LI_ELEMENT).forEach(e => {
+      e.style = 'margin-left: 28px'
+    })
 
     // REMOVES STYLING FROM DIVS
     doc.querySelectorAll(DIV_ELEMENT).forEach(e => {

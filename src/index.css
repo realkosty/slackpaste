@@ -91,6 +91,10 @@ textarea:focus {
   border-radius: 10px;
 }
 
+li {
+  list-style-type: disc;
+}
+
 .copy-button {
   border-radius: 10px;
   color:white;
