@@ -6,7 +6,7 @@ However, when copying from slack and pasting into Notion, threads get junked up 
 
 Slackpaste seeks to address these issues by stripping out unnecessary images and making it easy to copy from Slack and paste into Notion.
 
-## Usage
+## Usage:
 
 1. Copy an entire slack thread to the clipboard
 2. Paste it into the Slackpaste window
