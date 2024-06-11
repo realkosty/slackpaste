@@ -38,22 +38,37 @@ function App() {
   // enabled when there is nothing to copy.
   const [pasted, setPasted] = React.useState('')
   const [disabled, setDisabled] = React.useState(true)
+  const [anonymize, setAnonymize] = React.useState(false)
+  const [originalDoc, setOriginalDoc] = React.useState(null)
 
   React.useEffect(() => {
     document.getElementById(SLACK_INPUT).focus()
   }, [pasted])
 
   const handlePaste = (event) => {
-    let content = event.clipboardData.getData('text/html')
-    var doc = new DOMParser().parseFromString(content, 'text/html');
-    var [processed, attachmentsDetected] = processDoc(doc) //comment this line out if you want to debug / inspect original HTML
-    content = new XMLSerializer().serializeToString(processed)
-    setDisabled(false)
-    setPasted(content)
-    if(attachmentsDetected > 0) {
-      const attachmentGrammar = attachmentsDetected > 1 ? 'attachments' : 'attachment'
-      alert(`${attachmentsDetected} ${attachmentGrammar} detected. Remember to download image files and manually include them in notion.`)
+    let content = event.clipboardData.getData('text/html');
+    let newDoc = new DOMParser().parseFromString(content, 'text/html');
+    setOriginalDoc(newDoc);
+  }
+  
+  React.useEffect(() => {
+    if (originalDoc) {
+      let [processed, attachmentsDetected] = processDoc(originalDoc, anonymize)
+      let content = new XMLSerializer().serializeToString(processed)
+      setDisabled(false)
+      setPasted(content)
+      if(attachmentsDetected > 0) {
+        const attachmentGrammar = attachmentsDetected > 1 ? 'attachments' : 'attachment'
+        alert(`${attachmentsDetected} ${attachmentGrammar} detected. Remember to download image files and manually include them in notion.`)
+      }
+    } else {
+      setDisabled(true);
+      setPasted('');
     }
+  }, [originalDoc, anonymize])
+
+  const reprocess = (anonymize) => {
+    // re-process existing doc with new parameters
   }
 
   return (
@@ -62,7 +77,13 @@ function App() {
         <div className="col1">
           <h2 className="header">Paste Slack Thread:</h2>
           <textarea autoFocus placeholder="paste slack thread here" rows="5" cols="80" onPaste={handlePaste} type="text" id={SLACK_INPUT} autoComplete="no"></textarea>
-          <DeleteButton onClick={() => {document.getElementById(SLACK_INPUT).value = ''; setPasted(''); setDisabled(true)}} />
+          <div class="option">
+            <label>
+              <input type="checkbox" checked={anonymize} onChange={(e) => {setAnonymize(e.target.checked);}}/>
+              Anonymize
+            </label>
+          </div>
+          <DeleteButton onClick={() => {document.getElementById(SLACK_INPUT).value = '';  setOriginalDoc(null);}} />
           <CopyButton pasted={pasted} disabled={disabled} />
           <Popup />
         </div>

@@ -9,6 +9,10 @@ const MESSAGE_CLASS = '.c-virtual_list__item'
 const TIMESTAMP_LABEL_CLASS = '.c-timestamp__label'
 const TOP_THREE_EMOJIS_CLASS = '.c-message__actions'
 const ADD_REACTION_CLASS = '.c-reaction_add'
+const SENDER_SELECTOR = '.c-message__sender .c-message__sender_button'
+const DUPLICATE_SENDER_SELECTOR = '.c-message__sender [id^=secondary-]'
+const SLACK_CONNECT_EXT_ICON_SELECTOR = '.c-team_icon'
+const MENTION_SELECTOR = '.c-member_slug'
 
 const SVG_ELEMENT = 'svg'
 const IMG_ELEMENT = 'img'
@@ -25,7 +29,23 @@ const increaseResolution = (image) => {
   return formatted
 }
 
-const processDoc = (doc) => {
+function replaceAll(doc, searchText, replacementText) {
+    function replaceText(node) { // recursive 
+        if (node.nodeType === Node.TEXT_NODE) {
+            node.nodeValue = node.nodeValue.replace(new RegExp(searchText, 'g'), replacementText);
+        } else {
+            for (let child of node.childNodes) {
+                replaceText(child);
+            }
+        }
+    }
+    replaceText(doc);
+}
+
+
+const processDoc = (inputDoc, anonymize) => {
+    let doc = inputDoc.cloneNode(true); // deep copy
+
     var attachmentsDetected = 0;
 
     /// REPLACES EMOJIs with text about what the emoji is
@@ -49,6 +69,58 @@ const processDoc = (doc) => {
     doc.querySelectorAll('br').forEach(e => {
       const paragraph = document.createElement(PARAGRAPH_ELEMENT)
       e.parentNode.replaceChild(paragraph, e)
+    });
+    
+    if (anonymize) {
+      // ANONYMIZE
+      
+      function hasExtIcon(e) {
+        let parentPrevSibl = e.parentElement.previousElementSibling;
+        return parentPrevSibl && parentPrevSibl.matches(SLACK_CONNECT_EXT_ICON_SELECTOR);
+      }
+
+      let names = [...doc.querySelectorAll(SENDER_SELECTOR), ...doc.querySelectorAll(MENTION_SELECTOR)];
+      let placeholders = {};
+      let i = 0;
+      names.forEach(e => {
+        let name = e.textContent.trim().replace(/^@/,'');
+        if (!placeholders.hasOwnProperty(name)) {
+          // find if external or not, set prefix appropriately
+          let p = '';
+          if (e.matches(SENDER_SELECTOR)) {
+            if (hasExtIcon(e)) {
+              p = 'Ext_';
+            }
+          }
+          if (i == 0) {
+            p += `OP`;
+          } else {
+            p += `Person_${i}`;
+          }
+          placeholders[name] = p;
+          i++; 
+        } else if (placeholders[name] === 'OP') { // sometimes the copied block does not include first sender's icon even if it's there
+          if (e.matches(SENDER_SELECTOR)) {
+            if (hasExtIcon(e)) {
+              placeholders[name] = 'Ext_OP'; // correct after the fact
+            }
+          }
+        }
+      });
+
+      // both sender names and mentions
+      for (let sender in placeholders) {
+        replaceAll(doc, sender, placeholders[sender])
+      }
+
+      doc.querySelectorAll(SLACK_CONNECT_EXT_ICON_SELECTOR).forEach(e => {
+        e.remove();
+      });
+    }
+    
+    /// REMOVES duplicate sender name
+    doc.querySelectorAll(DUPLICATE_SENDER_SELECTOR).forEach(e => {
+      e.remove();
     });
 
     /// REMOVES AVATARS
