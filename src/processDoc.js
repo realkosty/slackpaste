@@ -10,9 +10,11 @@ const TIMESTAMP_LABEL_CLASS = '.c-timestamp__label'
 const TOP_THREE_EMOJIS_CLASS = '.c-message__actions'
 const ADD_REACTION_CLASS = '.c-reaction_add'
 const SENDER_SELECTOR = '.c-message__sender .c-message__sender_button'
-const DUPLICATE_SENDER_SELECTOR = '.c-message__sender [id^=secondary-]'
+const DUPLICATE_SENDER_SELECTOR = '.c-message__sender .offscreen'
 const SLACK_CONNECT_EXT_ICON_SELECTOR = '.c-team_icon'
 const MENTION_SELECTOR = '.c-member_slug'
+const SEPARATOR_SELECTOR = '[data-item-key="separator"]'
+const EDITED_SELECTOR = '.c-message__edited_label'
 
 const SVG_ELEMENT = 'svg'
 const IMG_ELEMENT = 'img'
@@ -42,8 +44,60 @@ function replaceAll(doc, searchText, replacementText) {
     replaceText(doc);
 }
 
+function doesAPrecedeB(a, b) {
+  return a.compareDocumentPosition(b) & Node.DOCUMENT_POSITION_FOLLOWING;
+}
 
-const processDoc = (inputDoc, anonymize) => {
+function getNodeSiblingsBetweenInclFirst(a, b) {
+  if (!a || !b) {
+    throw new Error('Invalid arguments');
+  }
+  if (!doesAPrecedeB(a, b)) {
+    throw new Error('First element does not precede second element');
+  }
+  if (a.parentNode !== b.parentNode) {
+    throw new Error('Elements have different parents');
+  }
+  if (a === b) {
+    return [];
+  }
+  let siblings = [a];
+  let current = a.nextSibling;
+  while (current && current !== b) {
+      siblings.push(current);
+      current = current.nextSibling;
+  }
+  return siblings;
+};
+
+function removeDataAttributes(element) {
+  const attributes = element.attributes;
+  for (let i = attributes.length - 1; i >= 0; i--) {
+      const attribute = attributes[i];
+      if (attribute.name.startsWith('data-')) {
+          element.removeAttribute(attribute.name);
+      }
+  }
+}
+
+function prettyPrintHTML(html) {
+  const tab = '  ';
+  let result = '';
+  let indent = '';
+  html.split(/>\s*</).forEach(element => {
+      if (element.match(/^\/\w/)) {
+          indent = indent.substring(tab.length);
+      }
+      result += indent + '<' + element + '>\n';
+      if (element.match(/^<?\w[^>]*[^\/]$/) && !element.startsWith("input")) {
+          indent += tab;
+      }
+  });
+  return result.substring(1, result.length - 2);
+}
+
+
+const processDoc = (inputDoc, anonymize, removeSeparator, includeTimestamp) => {
     let doc = inputDoc.cloneNode(true); // deep copy
 
     var attachmentsDetected = 0;
@@ -64,17 +118,27 @@ const processDoc = (inputDoc, anonymize) => {
       const paragraph = document.createElement(PARAGRAPH_ELEMENT)
       e.parentNode.replaceChild(paragraph, e)
     });
-
+    
     // Replace linebreaks marked by <br> tag
-    doc.querySelectorAll('br').forEach(e => {
-      const paragraph = document.createElement(PARAGRAPH_ELEMENT)
-      e.parentNode.replaceChild(paragraph, e)
+    doc.querySelectorAll('.p-rich_text_section').forEach(rts => {
+      // replace all <br> with <p>preceding text</p>
+      const brElements = rts.querySelectorAll('br');
+      let prev = rts.firstChild
+      brElements.forEach(br => {
+        const p = document.createElement('p');
+        const between = getNodeSiblingsBetweenInclFirst(prev, br);
+        between.forEach(e => {
+          p.appendChild(e);
+        });
+        br.before(p);
+        br.remove();
+        prev = p.nextSibling;
+      });
     });
     
     if (anonymize) {
       // ANONYMIZE
-      
-      function hasExtIcon(e) {
+      function hasExtIcon(e) { // external members of Slack Connect channels will have an icon
         let parentPrevSibl = e.parentElement.previousElementSibling;
         return parentPrevSibl && parentPrevSibl.matches(SLACK_CONNECT_EXT_ICON_SELECTOR);
       }
@@ -92,7 +156,7 @@ const processDoc = (inputDoc, anonymize) => {
               p = 'Ext_';
             }
           }
-          if (i == 0) {
+          if (i === 0) {
             p += `OP`;
           } else {
             p += `Person_${i}`;
@@ -117,6 +181,20 @@ const processDoc = (inputDoc, anonymize) => {
         e.remove();
       });
     }
+
+    doc.querySelectorAll(SENDER_SELECTOR).forEach(e => {
+      e.textContent += ':';
+    });
+
+    if (removeSeparator) {
+      doc.querySelectorAll(SEPARATOR_SELECTOR).forEach(e => {
+        e.remove();
+      });
+    }
+    
+    doc.querySelectorAll(EDITED_SELECTOR).forEach(e => {
+      e.remove();
+    });
     
     /// REMOVES duplicate sender name
     doc.querySelectorAll(DUPLICATE_SENDER_SELECTOR).forEach(e => {
@@ -198,7 +276,10 @@ const processDoc = (inputDoc, anonymize) => {
 
         // Apply timestamp only to the first message in the thread
         if (!foundFirstTimestamp) {
-          elm.querySelector('.c-message__sender button').innerHTML += ` (${humanReadableTimestamp})`;
+
+          if (includeTimestamp) {
+            elm.querySelector('.c-message__sender button').innerHTML += ` (${humanReadableTimestamp})`;
+          }
           foundFirstTimestamp = true;
         }
       }
@@ -234,6 +315,11 @@ const processDoc = (inputDoc, anonymize) => {
         e.className = "";
       }
     });
+
+    doc.querySelectorAll('*').forEach(removeDataAttributes)
+
+    // debug
+    //console.log(prettyPrintHTML(new XMLSerializer().serializeToString(doc)));
 
     return [doc, attachmentsDetected]
   }

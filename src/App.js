@@ -31,6 +31,11 @@ function CopyButton({pasted, disabled}) {
   )
 }
 
+function getFromLocalStorage(key, defaultValue) {
+  const saved = localStorage.getItem(key);
+  return saved ? JSON.parse(saved) : defaultValue;
+}
+
 function App() {
   // todo: use one state https://stackoverflow.com/a/61106532
   // to enable us to setDisabled(true) upon clicking the 'clear' button
@@ -38,8 +43,10 @@ function App() {
   // enabled when there is nothing to copy.
   const [pasted, setPasted] = React.useState('')
   const [disabled, setDisabled] = React.useState(true)
-  const [anonymize, setAnonymize] = React.useState(false)
   const [originalDoc, setOriginalDoc] = React.useState(null)
+  const [anonymize, setAnonymize] = React.useState(getFromLocalStorage('anonymize', false))
+  const [removeSeparator, setRemoveSeparator] = React.useState(getFromLocalStorage('removeSeparator', false))
+  const [includeTimestamp, setIncludeTimestamp] = React.useState(getFromLocalStorage('includeTimestamp', true))
 
   React.useEffect(() => {
     document.getElementById(SLACK_INPUT).focus()
@@ -53,7 +60,7 @@ function App() {
   
   React.useEffect(() => {
     if (originalDoc) {
-      let [processed, attachmentsDetected] = processDoc(originalDoc, anonymize)
+      let [processed, attachmentsDetected] = processDoc(originalDoc, anonymize, removeSeparator, includeTimestamp)
       let content = new XMLSerializer().serializeToString(processed)
       setDisabled(false)
       setPasted(content)
@@ -65,11 +72,14 @@ function App() {
       setDisabled(true);
       setPasted('');
     }
-  }, [originalDoc, anonymize])
+  }, [originalDoc, anonymize, removeSeparator, includeTimestamp])
 
-  const reprocess = (anonymize) => {
-    // re-process existing doc with new parameters
-  }
+  React.useEffect(() => {
+    localStorage.setItem('anonymize', JSON.stringify(anonymize));
+    localStorage.setItem('removeSeparator', JSON.stringify(removeSeparator));
+    localStorage.setItem('includeTimestamp', JSON.stringify(includeTimestamp));
+  }, [anonymize, removeSeparator, includeTimestamp])
+  
 
   return (
     <PopupProvider>
@@ -81,6 +91,18 @@ function App() {
             <label>
               <input type="checkbox" checked={anonymize} onChange={(e) => {setAnonymize(e.target.checked);}}/>
               Anonymize
+            </label>
+          </div>
+          <div class="option">
+            <label>
+              <input type="checkbox" checked={removeSeparator} onChange={(e) => {setRemoveSeparator(e.target.checked);}}/>
+              Remove separator 
+            </label>
+          </div>
+          <div class="option">
+            <label>
+              <input type="checkbox" checked={includeTimestamp} onChange={(e) => {setIncludeTimestamp(e.target.checked);}}/>
+              Include timestamp 
             </label>
           </div>
           <DeleteButton onClick={() => {document.getElementById(SLACK_INPUT).value = '';  setOriginalDoc(null);}} />
