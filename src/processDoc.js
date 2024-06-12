@@ -16,6 +16,7 @@ const MENTION_SELECTOR = '.c-member_slug'
 const SEPARATOR_SELECTOR = '[data-item-key="separator"]'
 const EDITED_SELECTOR = '.c-message__edited_label'
 const MESSAGE_SECTION_SELECTOR = '.p-rich_text_section'
+const MESSAGE_QUOTE_SELECTOR = '.c-mrkdwn__quote'
 const MESSAGE_BODY_SELECTOR = '.p-rich_text_block'
 //const MESSAGE_SECTION_LIST_SELECTOR = '.p-rich_text_section, .p-rich_text_list'
 
@@ -148,12 +149,21 @@ const processDoc = (inputDoc, {anonymize, removeSeparator, includeTimestamp, inc
 
     // Replace linebreaks marked by class
     doc.querySelectorAll('.c-mrkdwn__br').forEach(e => {
-      const paragraph = document.createElement(BR_ELEMENT)
+      const paragraph = document.createElement(BR_ELEMENT) // so that it can be later transformed to <p>
       e.parentNode.replaceChild(paragraph, e)
+    });
+   
+    // Don't ask why but without this, inline code/links insided blockquotes won't be formatted correctly
+    // Side effect of this is that there will be "Empty quote" placeholder in notion.
+    doc.querySelectorAll(MESSAGE_QUOTE_SELECTOR).forEach(q => {
+      if (q.querySelector('code, a')) {
+        q.prepend(document.createElement(BR_ELEMENT));
+      }
     });
 
     // assuming no <br>'s in <li> sections
-    doc.querySelectorAll(MESSAGE_SECTION_SELECTOR).forEach(messageBody => {
+    let blocksWithPossibleBrs = [...doc.querySelectorAll(MESSAGE_SECTION_SELECTOR), ...doc.querySelectorAll(MESSAGE_QUOTE_SELECTOR)];
+    blocksWithPossibleBrs.forEach(messageBody => {
       // Replace linebreaks marked by <br> tag
       // replace all <br> with <p>*preceding text*</p>
       const brElements = messageBody.querySelectorAll('br');
@@ -177,6 +187,12 @@ const processDoc = (inputDoc, {anonymize, removeSeparator, includeTimestamp, inc
           prev = next;
         }
         messageBody.appendChild(p);
+      }
+    });
+
+    doc.querySelectorAll(MESSAGE_QUOTE_SELECTOR).forEach(q => {
+      if (q.querySelector('code, a')) {
+        q.firstChild.innerHTML = '...'; // instead of "Empty quote" placeholder in Notion
       }
     });
     
