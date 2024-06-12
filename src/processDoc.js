@@ -53,7 +53,9 @@ function doesAPrecedeB(a, b) {
   return a.compareDocumentPosition(b) & Node.DOCUMENT_POSITION_FOLLOWING;
 }
 
-function getNodeSiblingsBetweenInclFirst(a, b) {
+// Returns an array of all sibling DOM nodes between and a and b
+// a itself is included in the result, b is not
+function getNodeSiblingsBetweenIncludingA(a, b) {
   if (!a || !b) {
     throw new Error('Invalid arguments');
   }
@@ -126,7 +128,7 @@ function surroundElement(targetElement, htmlTemplate) {
   targetElement.parentNode.replaceChild(documentFragment, targetElement);
 }
 
-const processDoc = (inputDoc, {anonymize, removeSeparator, includeTimestamp, includeChannelId, csvExportFriendly}) => {
+const processDoc = (inputDoc, {anonymize, includeChannelId, csvExportFriendly}) => {
     let doc = inputDoc.cloneNode(true); // deep copy
 
     var attachmentsDetected = 0;
@@ -171,7 +173,12 @@ const processDoc = (inputDoc, {anonymize, removeSeparator, includeTimestamp, inc
         let prev = messageBody.firstChild
         brElements.forEach(br => {
           const p = document.createElement('p');
-          const between = getNodeSiblingsBetweenInclFirst(prev, br);
+          // find all elements between:
+          //  * previous <br/> (already replaced with <p>...</p> at this point) OR the very first sibling (inclusive)
+          //  AND
+          //  * current <br/>
+          // so we can enclose them in their own <p></p>
+          const between = getNodeSiblingsBetweenIncludingA(prev, br);
           between.forEach(e => {
             p.appendChild(e);
           });
@@ -192,7 +199,7 @@ const processDoc = (inputDoc, {anonymize, removeSeparator, includeTimestamp, inc
 
     doc.querySelectorAll(MESSAGE_QUOTE_SELECTOR).forEach(q => {
       if (q.querySelector('code, a')) {
-        q.firstChild.innerHTML = '...'; // instead of "Empty quote" placeholder in Notion
+        q.firstChild.innerHTML = '>'; // instead of "Empty quote" placeholder in Notion
       }
     });
     
@@ -200,7 +207,8 @@ const processDoc = (inputDoc, {anonymize, removeSeparator, includeTimestamp, inc
       doc.querySelectorAll(MESSAGE_BODY_SELECTOR).forEach(messageBody => {
           // prepend link text markdown-style
           messageBody.querySelectorAll('a').forEach(a => {
-            if (a.textContent !== a.href) {
+            // handles truncated link text '*link beginning*[...]*remaining link*'
+            if (a.textContent.substring(0,81) !== a.href.substring(0,81)) { 
               let atext = a.textContent;
               // Note: this assumes that links from mentions have been removed earlier
               a.textContent = 'link'
@@ -223,7 +231,11 @@ const processDoc = (inputDoc, {anonymize, removeSeparator, includeTimestamp, inc
       // ANONYMIZE
       function hasExtIcon(e) { // external members of Slack Connect channels will have an icon
         let parentPrevSibl = e.parentElement.previousElementSibling;
-        return parentPrevSibl && parentPrevSibl.matches(SLACK_CONNECT_EXT_ICON_SELECTOR);
+        if (parentPrevSibl) { // "Compact" message display style (Preferneces -> Messages & media -> Theme)
+          return parentPrevSibl.matches(SLACK_CONNECT_EXT_ICON_SELECTOR);
+        } else { // "Clean" message display style
+          return e.closest(MESSAGE_CLASS).querySelector(SLACK_CONNECT_EXT_ICON_SELECTOR) != null;
+        }
       }
 
       let names = [...doc.querySelectorAll(SENDER_SELECTOR), ...doc.querySelectorAll(MENTION_SELECTOR)];
@@ -269,11 +281,10 @@ const processDoc = (inputDoc, {anonymize, removeSeparator, includeTimestamp, inc
       e.innerHTML = "<b>" + e.innerHTML + ':</b>';
     });
 
-    if (removeSeparator) {
+    // Remove horizontal line + number of replies
       doc.querySelectorAll(SEPARATOR_SELECTOR).forEach(e => {
         e.remove();
       });
-    }
     
     doc.querySelectorAll(EDITED_SELECTOR).forEach(e => {
       e.remove();
@@ -346,7 +357,7 @@ const processDoc = (inputDoc, {anonymize, removeSeparator, includeTimestamp, inc
       }
     });
 
-    if (includeTimestamp || includeChannelId) {
+    // Add a top info (timestamp + optionally, channelID) to the top of the thread
       const topInfo = document.createElement('div');
       topInfo.className = 'top-info';
       const firstMessage = doc.querySelector(MESSAGE_CLASS)
@@ -356,7 +367,6 @@ const processDoc = (inputDoc, {anonymize, removeSeparator, includeTimestamp, inc
       } else {
         doc.body.insertBefore(topInfo, doc.body.firstChild);
       }
-    }
 
     if (includeChannelId) {
       // FIND CHANNEL ID
@@ -372,7 +382,7 @@ const processDoc = (inputDoc, {anonymize, removeSeparator, includeTimestamp, inc
         }
       });
       const mostCommonChannelId = [...channelIdCount.entries()].reduce((a, b) => b[1] > a[1] ? b : a)[0];
-      doc.querySelector('.top-info').innerHTML = `(${mostCommonChannelId})`;
+      doc.querySelector('.top-info').innerHTML = `(Channel ID: ${mostCommonChannelId})`;
     }
 
     var foundFirstTimestamp = false;
@@ -390,10 +400,9 @@ const processDoc = (inputDoc, {anonymize, removeSeparator, includeTimestamp, inc
         // Apply timestamp only to the first message in the thread
         if (!foundFirstTimestamp) {
 
-          if (includeTimestamp) {
             let topInfo = doc.querySelector('.top-info')
             topInfo.innerHTML = humanReadableTimestamp + ' ' + topInfo.textContent;
-          }
+
           foundFirstTimestamp = true;
         }
       }
