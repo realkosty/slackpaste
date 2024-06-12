@@ -200,10 +200,12 @@ const processDoc = (inputDoc, {anonymize, removeSeparator, includeTimestamp, inc
       doc.querySelectorAll(MESSAGE_BODY_SELECTOR).forEach(messageBody => {
           // prepend link text markdown-style
           messageBody.querySelectorAll('a').forEach(a => {
-            let atext = a.textContent;
-            // Note: this assumes that links from mentions have been removed earlier
-            a.textContent = 'link'
-            surroundElement(a, '[' + atext + ']({targetElement})')
+            if (a.textContent !== a.href) {
+              let atext = a.textContent;
+              // Note: this assumes that links from mentions have been removed earlier
+              a.textContent = 'link'
+              surroundElement(a, '[' + atext + ']({targetElement})')
+            }
           });
 
           messageBody.querySelectorAll('pre').forEach(pre => {
