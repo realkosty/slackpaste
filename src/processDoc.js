@@ -206,6 +206,10 @@ const processDoc = (inputDoc, {anonymize, removeSeparator, includeTimestamp, inc
             surroundElement(a, '[' + atext + ']({targetElement})')
           });
 
+          messageBody.querySelectorAll('pre').forEach(pre => {
+            surroundElement(pre, '&#96;&#96;&#96;{targetElement}&#96;&#96;&#96;');
+          });
+
           // surround with ` backticks
           messageBody.querySelectorAll('code').forEach(code => {
             surroundElement(code, '&#96;{targetElement}&#96;');
