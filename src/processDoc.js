@@ -5,7 +5,7 @@ const NEW_MESSAGES_DIVIDER_CLASS = '.c-message_list__unread_divider'
 const ATTACHMENTS_CLASS = '.c-message_kit__attachments' // how is this different from attached files?
 const CUSTOM_STATUS_EMOJI_CLASS = '.c-custom_status'
 const ATTACHED_FILES_CONTAINER_CLASS = '.p-message_gallery_image_file'
-const MESSAGE_CLASS = '.c-virtual_list__item'
+const MESSAGE_CLASS = '.c-virtual_list__item' // or '.c-message_kit__message'?
 const TIMESTAMP_LABEL_CLASS = '.c-timestamp__label'
 const TOP_THREE_EMOJIS_CLASS = '.c-message__actions'
 const ADD_REACTION_CLASS = '.c-reaction_add'
@@ -15,11 +15,15 @@ const SLACK_CONNECT_EXT_ICON_SELECTOR = '.c-team_icon'
 const MENTION_SELECTOR = '.c-member_slug'
 const SEPARATOR_SELECTOR = '[data-item-key="separator"]'
 const EDITED_SELECTOR = '.c-message__edited_label'
+const MESSAGE_SECTION_SELECTOR = '.p-rich_text_section'
+const MESSAGE_BODY_SELECTOR = '.p-rich_text_block'
+//const MESSAGE_SECTION_LIST_SELECTOR = '.p-rich_text_section, .p-rich_text_list'
 
 const SVG_ELEMENT = 'svg'
 const IMG_ELEMENT = 'img'
 const DIV_ELEMENT = 'div'
 const PARAGRAPH_ELEMENT = 'p'
+const BR_ELEMENT = 'br'
 const LI_ELEMENT = 'li'
 
 // By default, slack provides an image src that is the thumbnail
@@ -52,14 +56,14 @@ function getNodeSiblingsBetweenInclFirst(a, b) {
   if (!a || !b) {
     throw new Error('Invalid arguments');
   }
+  if (a === b) {
+    return [];
+  }
   if (!doesAPrecedeB(a, b)) {
     throw new Error('First element does not precede second element');
   }
   if (a.parentNode !== b.parentNode) {
     throw new Error('Elements have different parents');
-  }
-  if (a === b) {
-    return [];
   }
   let siblings = [a];
   let current = a.nextSibling;
@@ -96,8 +100,32 @@ function prettyPrintHTML(html) {
   return result.substring(1, result.length - 2);
 }
 
+function changeAToSpan(anchor) {
+  if (!anchor || anchor.tagName !== 'A') {
+    throw new Error('Invalid argument');
+  }
+  const span = document.createElement('span');
+  Array.from(anchor.attributes).forEach(attr => {
+    if (attr.name !== 'href') {
+      span.setAttribute(attr.name, attr.value);
+    }
+  });
+  span.innerHTML = anchor.innerHTML;
+  anchor.parentNode.replaceChild(span, anchor);
+}
 
-const processDoc = (inputDoc, anonymize, removeSeparator, includeTimestamp) => {
+function surroundElement(targetElement, htmlTemplate) {
+  if (!targetElement) {
+      return;
+  }
+  const targetElementHTML = targetElement.outerHTML;
+  const newHTML = htmlTemplate.replace('{targetElement}', targetElementHTML);
+  const range = document.createRange();
+  const documentFragment = range.createContextualFragment(newHTML);
+  targetElement.parentNode.replaceChild(documentFragment, targetElement);
+}
+
+const processDoc = (inputDoc, {anonymize, removeSeparator, includeTimestamp, includeChannelId, csvExportFriendly}) => {
     let doc = inputDoc.cloneNode(true); // deep copy
 
     var attachmentsDetected = 0;
@@ -113,28 +141,61 @@ const processDoc = (inputDoc, anonymize, removeSeparator, includeTimestamp) => {
       e.parentNode.replaceChild(emojiText, e)
     });
 
+    // remove links from all mentions
+    doc.querySelectorAll(MENTION_SELECTOR).forEach(e => {
+      changeAToSpan(e);
+    });
+
     // Replace linebreaks marked by class
     doc.querySelectorAll('.c-mrkdwn__br').forEach(e => {
-      const paragraph = document.createElement(PARAGRAPH_ELEMENT)
+      const paragraph = document.createElement(BR_ELEMENT)
       e.parentNode.replaceChild(paragraph, e)
     });
-    
-    // Replace linebreaks marked by <br> tag
-    doc.querySelectorAll('.p-rich_text_section').forEach(rts => {
-      // replace all <br> with <p>preceding text</p>
-      const brElements = rts.querySelectorAll('br');
-      let prev = rts.firstChild
-      brElements.forEach(br => {
-        const p = document.createElement('p');
-        const between = getNodeSiblingsBetweenInclFirst(prev, br);
-        between.forEach(e => {
-          p.appendChild(e);
+
+    // assuming no <br>'s in <li> sections
+    doc.querySelectorAll(MESSAGE_SECTION_SELECTOR).forEach(messageBody => {
+      // Replace linebreaks marked by <br> tag
+      // replace all <br> with <p>*preceding text*</p>
+      const brElements = messageBody.querySelectorAll('br');
+      if (brElements.length !== 0) {
+        let prev = messageBody.firstChild
+        brElements.forEach(br => {
+          const p = document.createElement('p');
+          const between = getNodeSiblingsBetweenInclFirst(prev, br);
+          between.forEach(e => {
+            p.appendChild(e);
+          });
+          br.before(p);
+          br.remove();
+          prev = p.nextSibling;
         });
-        br.before(p);
-        br.remove();
-        prev = p.nextSibling;
-      });
+        // now wrap all remaining children in a <p>
+        const p = document.createElement('p');
+        while (prev) {
+          let next = prev.nextSibling;
+          p.appendChild(prev);
+          prev = next;
+        }
+        messageBody.appendChild(p);
+      }
     });
+    
+    if (csvExportFriendly) {
+      doc.querySelectorAll(MESSAGE_BODY_SELECTOR).forEach(messageBody => {
+          // prepend link text markdown-style
+          messageBody.querySelectorAll('a').forEach(a => {
+            let atext = a.textContent;
+            // Note: this assumes that links from mentions have been removed earlier
+            a.textContent = 'link'
+            surroundElement(a, '[' + atext + ']({targetElement})')
+          });
+
+          // surround with ` backticks
+          messageBody.querySelectorAll('code').forEach(code => {
+            surroundElement(code, '&#96;{targetElement}&#96;');
+          });
+      });
+    }
     
     if (anonymize) {
       // ANONYMIZE
@@ -183,7 +244,7 @@ const processDoc = (inputDoc, anonymize, removeSeparator, includeTimestamp) => {
     }
 
     doc.querySelectorAll(SENDER_SELECTOR).forEach(e => {
-      e.textContent += ':';
+      e.innerHTML = "<b>" + e.innerHTML + ':</b>';
     });
 
     if (removeSeparator) {
@@ -263,6 +324,35 @@ const processDoc = (inputDoc, anonymize, removeSeparator, includeTimestamp) => {
       }
     });
 
+    if (includeTimestamp || includeChannelId) {
+      const topInfo = document.createElement('div');
+      topInfo.className = 'top-info';
+      const firstMessage = doc.querySelector(MESSAGE_CLASS)
+      if (firstMessage) {
+        const parent = firstMessage.parentNode;
+        parent.insertBefore(topInfo, firstMessage);
+      } else {
+        doc.body.insertBefore(topInfo, doc.body.firstChild);
+      }
+    }
+
+    if (includeChannelId) {
+      // FIND CHANNEL ID
+      // channel id also appears in 'id' and 'data-qa' attributes of various elements
+      // e.g. id="secondary-<CHANNEL_ID>-1712126445.441249-sender"
+      // but we will look at just <a> elements for now
+      const channelIdCount = new Map(); // just in case there are links to other channels, pick one that appears the most
+      doc.querySelectorAll('a').forEach((e) => {
+        let m = e.href.match(/^https:\/\/[^./]+.slack.com\/archives\/([A-Z0-9]+)\/.*/);
+        if (m) {
+            let channelId = m[1];
+            channelIdCount.set(channelId, (channelIdCount.get(channelId) || 0) + 1);
+        }
+      });
+      const mostCommonChannelId = [...channelIdCount.entries()].reduce((a, b) => b[1] > a[1] ? b : a)[0];
+      doc.querySelector('.top-info').innerHTML = `(${mostCommonChannelId})`;
+    }
+
     var foundFirstTimestamp = false;
     for(const elm of doc.querySelectorAll(MESSAGE_CLASS)) {
       // Timestamp manipulation is done to avoid getting timestamps reading
@@ -271,14 +361,16 @@ const processDoc = (inputDoc, anonymize, removeSeparator, includeTimestamp) => {
       const timestampLink = elm.querySelector(TIMESTAMP_LABEL_CLASS)
       if (timestampLink) {
         const timestamp = timestampLink?.parentElement.getAttribute('data-ts')
-        const humanReadableTimestamp = new Date(timestamp * 1000).toDateString() // i.e. Mon Mar 23 2023
+        // e.g. Mar 23, 2023
+        const humanReadableTimestamp = new Date(timestamp * 1000).toLocaleDateString('en-US', {month: 'short', day: 'numeric', year: 'numeric'});
         timestampLink.remove();
 
         // Apply timestamp only to the first message in the thread
         if (!foundFirstTimestamp) {
 
           if (includeTimestamp) {
-            elm.querySelector('.c-message__sender button').innerHTML += ` (${humanReadableTimestamp})`;
+            let topInfo = doc.querySelector('.top-info')
+            topInfo.innerHTML = humanReadableTimestamp + ' ' + topInfo.textContent;
           }
           foundFirstTimestamp = true;
         }
@@ -319,7 +411,16 @@ const processDoc = (inputDoc, anonymize, removeSeparator, includeTimestamp) => {
     doc.querySelectorAll('*').forEach(removeDataAttributes)
 
     // debug
-    //console.log(prettyPrintHTML(new XMLSerializer().serializeToString(doc)));
+    
+    let debugDoc = doc.cloneNode(true)
+    debugDoc.querySelectorAll('*').forEach(e => { // remove attributes for readability
+      e.removeAttribute('class')
+      e.removeAttribute('dir')
+      e.removeAttribute('style')
+      e.removeAttribute('delay')
+    });
+    console.log(prettyPrintHTML(new XMLSerializer().serializeToString(debugDoc)));
+    
 
     return [doc, attachmentsDetected]
   }

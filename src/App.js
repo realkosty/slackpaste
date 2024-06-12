@@ -31,6 +31,17 @@ function CopyButton({pasted, disabled}) {
   )
 }
 
+function Checkbox({label, initialValue, onChangeCallback}) {
+  return (
+    <div class="option">
+      <label>
+        <input type="checkbox" checked={initialValue} onChange={(e) => {onChangeCallback(e.target.checked);}}/>
+        {label}
+      </label>
+    </div>
+  )
+}
+
 function getFromLocalStorage(key, defaultValue) {
   const saved = localStorage.getItem(key);
   return saved ? JSON.parse(saved) : defaultValue;
@@ -47,6 +58,8 @@ function App() {
   const [anonymize, setAnonymize] = React.useState(getFromLocalStorage('anonymize', false))
   const [removeSeparator, setRemoveSeparator] = React.useState(getFromLocalStorage('removeSeparator', false))
   const [includeTimestamp, setIncludeTimestamp] = React.useState(getFromLocalStorage('includeTimestamp', true))
+  const [includeChannelId, setIncludeChannelId] = React.useState(getFromLocalStorage('includeChannelId', true))
+  const [csvExportFriendly, setCsvExportFriendly] = React.useState(getFromLocalStorage('csvExportFriendly', false))
 
   React.useEffect(() => {
     document.getElementById(SLACK_INPUT).focus()
@@ -60,7 +73,7 @@ function App() {
   
   React.useEffect(() => {
     if (originalDoc) {
-      let [processed, attachmentsDetected] = processDoc(originalDoc, anonymize, removeSeparator, includeTimestamp)
+      let [processed, attachmentsDetected] = processDoc(originalDoc, {anonymize, removeSeparator, includeTimestamp, includeChannelId, csvExportFriendly})
       let content = new XMLSerializer().serializeToString(processed)
       setDisabled(false)
       setPasted(content)
@@ -72,13 +85,15 @@ function App() {
       setDisabled(true);
       setPasted('');
     }
-  }, [originalDoc, anonymize, removeSeparator, includeTimestamp])
+  }, [originalDoc, anonymize, removeSeparator, includeTimestamp, includeChannelId, csvExportFriendly])
 
   React.useEffect(() => {
     localStorage.setItem('anonymize', JSON.stringify(anonymize));
     localStorage.setItem('removeSeparator', JSON.stringify(removeSeparator));
     localStorage.setItem('includeTimestamp', JSON.stringify(includeTimestamp));
-  }, [anonymize, removeSeparator, includeTimestamp])
+    localStorage.setItem('includeChannelId', JSON.stringify(includeChannelId));
+    localStorage.setItem('csvExportFriendly', JSON.stringify(csvExportFriendly));
+  }, [anonymize, removeSeparator, includeTimestamp, includeChannelId, csvExportFriendly])
   
 
   return (
@@ -87,24 +102,11 @@ function App() {
         <div className="col1">
           <h2 className="header">Paste Slack Thread:</h2>
           <textarea autoFocus placeholder="paste slack thread here" rows="5" cols="80" onPaste={handlePaste} type="text" id={SLACK_INPUT} autoComplete="no"></textarea>
-          <div class="option">
-            <label>
-              <input type="checkbox" checked={anonymize} onChange={(e) => {setAnonymize(e.target.checked);}}/>
-              Anonymize
-            </label>
-          </div>
-          <div class="option">
-            <label>
-              <input type="checkbox" checked={removeSeparator} onChange={(e) => {setRemoveSeparator(e.target.checked);}}/>
-              Remove separator 
-            </label>
-          </div>
-          <div class="option">
-            <label>
-              <input type="checkbox" checked={includeTimestamp} onChange={(e) => {setIncludeTimestamp(e.target.checked);}}/>
-              Include timestamp 
-            </label>
-          </div>
+          <Checkbox label="Anonymize" initialValue={anonymize} onChangeCallback={setAnonymize} />
+          <Checkbox label="Remove separator" initialValue={removeSeparator} onChangeCallback={setRemoveSeparator} />
+          <Checkbox label="Include timestamp" initialValue={includeTimestamp} onChangeCallback={setIncludeTimestamp} />
+          <Checkbox label="Include channel ID" initialValue={includeChannelId} onChangeCallback={setIncludeChannelId} />
+          <Checkbox label="CSV export-friendly (link text, code blocks)" initialValue={csvExportFriendly} onChangeCallback={setCsvExportFriendly} />
           <DeleteButton onClick={() => {document.getElementById(SLACK_INPUT).value = '';  setOriginalDoc(null);}} />
           <CopyButton pasted={pasted} disabled={disabled} />
           <Popup />
