@@ -79,30 +79,33 @@ function getNodeSiblingsBetweenIncludingA(a, b) {
 
 // ChatGPT generated
 const processNestedLists = (doc) => {
-  const items = [...doc.querySelectorAll("ul, ol")];
+  const listItems = [...doc.querySelectorAll('ul, ol')];
 
-  if (items.length === 0) return doc;
+  for (let i = listItems.length - 1; i >= 0; i--) {
+    const currentList = listItems[i];
+    const currentIndent = parseInt(currentList.getAttribute('data-indent'), 10);
+    let parentList = null;
 
-  const fragment = document.createDocumentFragment();
-  const stack = [{ level: 0, parent: fragment }];
+    for (let j = i - 1; j >= 0; j--) {
+      const potentialParentList = listItems[j];
+      const potentialParentIndent = parseInt(potentialParentList.getAttribute('data-indent'), 10);
 
-  items.forEach((ul) => {
-    const level = parseInt(ul.getAttribute("data-indent"), 10);
-
-    while (stack.length > 1 && stack[stack.length - 1].level >= level) {
-      stack.pop();
+      if (potentialParentIndent < currentIndent) {
+        parentList = potentialParentList;
+        break;
+      }
     }
 
-    const parent = stack[stack.length - 1].parent;
-    parent.appendChild(ul);
+    if (parentList) {
+      const parentListItem = parentList.querySelector('li:last-child');
+      if (parentListItem) {
+        parentListItem.appendChild(currentList);
+      }
+    }
+  }
 
-    stack.push({ level, parent: ul });
-  });
-
-  doc.body.appendChild(fragment);
   return doc;
 };
-
 function removeDataAttributes(element) {
   const attributes = element.attributes;
   for (let i = attributes.length - 1; i >= 0; i--) {
@@ -110,7 +113,7 @@ function removeDataAttributes(element) {
       if(attribute.name === 'data-indent') {
         continue;
       }
-      
+
       if (attribute.name.startsWith('data-')) {
           element.removeAttribute(attribute.name);
       }
