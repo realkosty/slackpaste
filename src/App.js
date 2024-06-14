@@ -31,6 +31,22 @@ function CopyButton({pasted, disabled}) {
   )
 }
 
+function Checkbox({label, initialValue, onChangeCallback}) {
+  return (
+    <div class="option">
+      <label>
+        <input type="checkbox" checked={initialValue} onChange={(e) => {onChangeCallback(e.target.checked);}}/>
+        {label}
+      </label>
+    </div>
+  )
+}
+
+function getFromLocalStorage(key, defaultValue) {
+  const saved = localStorage.getItem(key);
+  return saved ? JSON.parse(saved) : defaultValue;
+}
+
 function App() {
   // todo: use one state https://stackoverflow.com/a/61106532
   // to enable us to setDisabled(true) upon clicking the 'clear' button
@@ -38,31 +54,54 @@ function App() {
   // enabled when there is nothing to copy.
   const [pasted, setPasted] = React.useState('')
   const [disabled, setDisabled] = React.useState(true)
+  const [originalDoc, setOriginalDoc] = React.useState(null)
+  const [anonymize, setAnonymize] = React.useState(getFromLocalStorage('anonymize', false))
+  const [includeChannelId, setIncludeChannelId] = React.useState(getFromLocalStorage('includeChannelId', true))
+  const [csvExportFriendly, setCsvExportFriendly] = React.useState(getFromLocalStorage('csvExportFriendly', false))
 
   React.useEffect(() => {
     document.getElementById(SLACK_INPUT).focus()
   }, [pasted])
 
   const handlePaste = (event) => {
-    let content = event.clipboardData.getData('text/html')
-    var doc = new DOMParser().parseFromString(content, 'text/html');
-    var [processed, attachmentsDetected] = processDoc(doc) //comment this line out if you want to debug / inspect original HTML
-    content = new XMLSerializer().serializeToString(processed)
-    setDisabled(false)
-    setPasted(content)
-    if(attachmentsDetected > 0) {
-      const attachmentGrammar = attachmentsDetected > 1 ? 'attachments' : 'attachment'
-      alert(`${attachmentsDetected} ${attachmentGrammar} detected. Remember to download image files and manually include them in notion.`)
-    }
+    let content = event.clipboardData.getData('text/html');
+    let newDoc = new DOMParser().parseFromString(content, 'text/html');
+    setOriginalDoc(newDoc);
   }
+  
+  React.useEffect(() => {
+    if (originalDoc) {
+      let [processed, attachmentsDetected] = processDoc(originalDoc, {anonymize, includeChannelId, csvExportFriendly})
+      let content = new XMLSerializer().serializeToString(processed)
+      setDisabled(false)
+      setPasted(content)
+      if(attachmentsDetected > 0) {
+        const attachmentGrammar = attachmentsDetected > 1 ? 'attachments' : 'attachment'
+        alert(`${attachmentsDetected} ${attachmentGrammar} detected. Remember to download image files and manually include them in notion.`)
+      }
+    } else {
+      setDisabled(true);
+      setPasted('');
+    }
+  }, [originalDoc, anonymize, includeChannelId, csvExportFriendly])
+
+  React.useEffect(() => {
+    localStorage.setItem('anonymize', JSON.stringify(anonymize));
+    localStorage.setItem('includeChannelId', JSON.stringify(includeChannelId));
+    localStorage.setItem('csvExportFriendly', JSON.stringify(csvExportFriendly));
+  }, [anonymize, includeChannelId, csvExportFriendly])
+  
 
   return (
     <PopupProvider>
       <div className="App container">
         <div className="col1">
           <h2 className="header">Paste Slack Thread:</h2>
+          <Checkbox label="Anonymize" initialValue={anonymize} onChangeCallback={setAnonymize} />
+          <Checkbox label="Include channel ID" initialValue={includeChannelId} onChangeCallback={setIncludeChannelId} />
+          <Checkbox label="CSV export-friendly (link text, code blocks)" initialValue={csvExportFriendly} onChangeCallback={setCsvExportFriendly} />
           <textarea autoFocus placeholder="paste slack thread here" rows="5" cols="80" onPaste={handlePaste} type="text" id={SLACK_INPUT} autoComplete="no"></textarea>
-          <DeleteButton onClick={() => {document.getElementById(SLACK_INPUT).value = ''; setPasted(''); setDisabled(true)}} />
+          <DeleteButton onClick={() => {document.getElementById(SLACK_INPUT).value = '';  setOriginalDoc(null);}} />
           <CopyButton pasted={pasted} disabled={disabled} />
           <Popup />
         </div>
