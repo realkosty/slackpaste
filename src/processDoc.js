@@ -77,10 +77,40 @@ function getNodeSiblingsBetweenIncludingA(a, b) {
   return siblings;
 };
 
+// ChatGPT generated
+const processNestedLists = (doc) => {
+  const items = [...doc.querySelectorAll("ul, ol")];
+
+  if (items.length === 0) return doc;
+
+  const fragment = document.createDocumentFragment();
+  const stack = [{ level: 0, parent: fragment }];
+
+  items.forEach((ul) => {
+    const level = parseInt(ul.getAttribute("data-indent"), 10);
+
+    while (stack.length > 1 && stack[stack.length - 1].level >= level) {
+      stack.pop();
+    }
+
+    const parent = stack[stack.length - 1].parent;
+    parent.appendChild(ul);
+
+    stack.push({ level, parent: ul });
+  });
+
+  doc.body.appendChild(fragment);
+  return doc;
+};
+
 function removeDataAttributes(element) {
   const attributes = element.attributes;
   for (let i = attributes.length - 1; i >= 0; i--) {
       const attribute = attributes[i];
+      if(attribute.name === 'data-indent') {
+        continue;
+      }
+      
       if (attribute.name.startsWith('data-')) {
           element.removeAttribute(attribute.name);
       }
@@ -439,6 +469,10 @@ const processDoc = (inputDoc, {anonymize, includeChannelId, csvExportFriendly}) 
       }
     });
 
+    doc = processNestedLists(doc)
+
+    // Do this at/toward the end -- data attributes may be used earlier
+    // during processing, for example when processing nested lists
     doc.querySelectorAll('*').forEach(removeDataAttributes)
 
     // debug
