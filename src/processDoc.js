@@ -77,10 +77,43 @@ function getNodeSiblingsBetweenIncludingA(a, b) {
   return siblings;
 };
 
+// ChatGPT generated
+const processNestedLists = (doc) => {
+  const listItems = [...doc.querySelectorAll('ul, ol')];
+
+  for (let i = listItems.length - 1; i >= 0; i--) {
+    const currentList = listItems[i];
+    const currentIndent = parseInt(currentList.getAttribute('data-indent'), 10);
+    let parentList = null;
+
+    for (let j = i - 1; j >= 0; j--) {
+      const potentialParentList = listItems[j];
+      const potentialParentIndent = parseInt(potentialParentList.getAttribute('data-indent'), 10);
+
+      if (potentialParentIndent < currentIndent) {
+        parentList = potentialParentList;
+        break;
+      }
+    }
+
+    if (parentList) {
+      const parentListItem = parentList.querySelector('li:last-child');
+      if (parentListItem) {
+        parentListItem.appendChild(currentList);
+      }
+    }
+  }
+
+  return doc;
+};
 function removeDataAttributes(element) {
   const attributes = element.attributes;
   for (let i = attributes.length - 1; i >= 0; i--) {
       const attribute = attributes[i];
+      if(attribute.name === 'data-indent') {
+        continue;
+      }
+
       if (attribute.name.startsWith('data-')) {
           element.removeAttribute(attribute.name);
       }
@@ -439,6 +472,10 @@ const processDoc = (inputDoc, {anonymize, includeChannelId, csvExportFriendly}) 
       }
     });
 
+    doc = processNestedLists(doc)
+
+    // Do this at/toward the end -- data attributes may be used earlier
+    // during processing, for example when processing nested lists
     doc.querySelectorAll('*').forEach(removeDataAttributes)
 
     // debug
