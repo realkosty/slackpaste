@@ -8,6 +8,17 @@ import reportWebVitals from './reportWebVitals';
 import * as Sentry from "@sentry/react";
 import { BrowserTracing } from "@sentry/tracing";
 
+function getEnvironment() {
+  let url = window.location.href;
+  if (url.includes('localhost') || url.includes('127.0.0.1')) {
+    return 'dev';
+  } else if (window.location.href.startsWith('https://slackpaste.vercel.app')) {
+    return 'prod';
+  } else {
+    return 'unknown';
+  }
+}
+
 Sentry.init({
   dsn: "https://1ac0a2b6ddf44c4eb335e506dde7a843@o87286.ingest.sentry.io/4504878909620224",
   integrations: [
@@ -18,6 +29,7 @@ Sentry.init({
       blockAllMedia: true,
     }),
   ],
+  environment: getEnvironment(),
   tracesSampleRate: 1.0,
   // This sets the sample rate to be 10%. You may want this to be 100% while
   // in development and sample at a lower rate in production
