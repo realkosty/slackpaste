@@ -9,14 +9,7 @@ import * as Sentry from "@sentry/react";
 import { BrowserTracing } from "@sentry/tracing";
 
 function getEnvironment() {
-  let url = window.location.href;
-  if (url.includes('localhost') || url.includes('127.0.0.1')) {
-    return 'dev';
-  } else if (window.location.href.startsWith('https://slackpaste.vercel.app')) {
-    return 'prod';
-  } else {
-    return 'unknown';
-  }
+  return process.env.environment || 'dev';
 }
 
 Sentry.init({
