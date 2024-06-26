@@ -25,6 +25,7 @@ const IMG_ELEMENT = 'img';
 const DIV_ELEMENT = 'div';
 const PARAGRAPH_ELEMENT = 'p';
 const BR_ELEMENT = 'br';
+const HR_ELEMENT = 'hr';
 const LI_ELEMENT = 'li';
 
 // By default, slack provides an image src that is the thumbnail
@@ -467,6 +468,11 @@ const processDoc = (inputDoc, { anonymize, includeChannelId, csvExportFriendly }
 
   doc.querySelectorAll(LI_ELEMENT).forEach(e => {
     e.style = 'margin-left: 28px';
+  });
+
+  // Add horizontal separator between messages
+  doc.querySelectorAll(MESSAGE_CLASS).forEach(e => {
+    e.prepend(document.createElement(HR_ELEMENT));
   });
 
   // REMOVES STYLING FROM DIVS
